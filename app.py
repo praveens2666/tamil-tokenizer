@@ -54,12 +54,13 @@ special_splits = getTokens("filtered_output_file.txt")
 # ========== DB CONNECTION ==========
 def get_db_connection():
     return psycopg2.connect(
-        dbname="tokenizer_db",
-        user="postgres",
-        password="PRav-1234_26062006",
-        host="https://lgbpuhkkfxswlgpxirfc.supabase.co",
-        port="5432"
+        dbname=os.getenv("PGDATABASE"),
+        user=os.getenv("PGUSER"),
+        password=os.getenv("PGPASSWORD"),
+        host=os.getenv("PGHOST"),
+        port=os.getenv("PGPORT")
     )
+
 
 def get_corrected_token(original):
     original = clean_word(original)
