@@ -54,12 +54,13 @@ special_splits = getTokens("filtered_output_file.txt")
 # ========== DB CONNECTION ==========
 def get_db_connection():
     return psycopg2.connect(
-        dbname=os.getenv("PGDATABASE"),
-        user=os.getenv("PGUSER"),
-        password=os.getenv("PGPASSWORD"),
-        host=os.getenv("PGHOST"),
-        port=os.getenv("PGPORT")
+        dbname=os.getenv("railway"),
+        user=os.getenv("postgres"),
+        password=os.getenv("ykUaIJiRwgypYZyEZZbFhenDEDpUaQNw"),
+        host=os.getenv("postgres.railway.internal"),
+        port=os.getenv("5432")
     )
+
 
 
 def get_corrected_token(original):
