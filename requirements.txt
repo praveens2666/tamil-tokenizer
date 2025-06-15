@@ -2,4 +2,5 @@ Flask
 transformers
 sentencepiece
 regex
+gunicorn
 psycopg2-binary
