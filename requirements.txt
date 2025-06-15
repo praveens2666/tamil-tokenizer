@@ -1,0 +1,5 @@
+Flask
+transformers
+sentencepiece
+regex
+psycopg2-binary
