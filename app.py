@@ -56,7 +56,7 @@ def get_db_connection():
     return psycopg2.connect(
         dbname=os.getenv("railway"),
         user=os.getenv("postgres"),
-        password=os.getenv("ykUaIJiRwgypYZyEZZbFhenDEDpUaQNw"),
+        password=os.getenv("woOZPpnACTqGnXCwUEonAUtIGdFDEEje"),
         host=os.getenv("postgres.railway.internal"),
         port=os.getenv("5432")
     )
