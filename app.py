@@ -166,7 +166,7 @@ def save_correction_batch():
         if original and corrected:
             cursor.execute("DELETE FROM corrections WHERE original = %s", (original,))
             cursor.execute(
-                "INSERT INTO corrections (original, corrected, expert_name) VALUES (%s, %s, %s)",
+                "INSERT INTO corrections (original, corrected, expert-name) VALUES (%s, %s, %s)",
                 (original, corrected, expert)
             )
 
