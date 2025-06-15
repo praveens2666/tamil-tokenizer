@@ -53,19 +53,20 @@ special_splits = getTokens("filtered_output_file.txt")
 
 # ========== DB CONNECTION ==========
 def get_db_connection():
-    try:
-        conn = psycopg2.connect(
-            dbname=os.getenv("PGDATABASE"),
-            user=os.getenv("PGUSER"),
-            password=os.getenv("PGPASSWORD"),
-            host=os.getenv("PGHOST"),
-            port=os.getenv("PGPORT")
-        )
-        print("✅ Connected to DB successfully!")
-        return conn
-    except Exception as e:
-        print("❌ DB Connection Error:", e)
-        raise
+    print("🔍 DB ENV VARS:")
+    print("PGDATABASE:", os.getenv("PGDATABASE"))
+    print("PGUSER:", os.getenv("PGUSER"))
+    print("PGPASSWORD:", os.getenv("PGPASSWORD"))
+    print("PGHOST:", os.getenv("PGHOST"))
+    print("PGPORT:", os.getenv("PGPORT"))
+
+    return psycopg2.connect(
+        dbname=os.getenv("PGDATABASE"),
+        user=os.getenv("PGUSER"),
+        password=os.getenv("PGPASSWORD"),
+        host=os.getenv("PGHOST"),
+        port=os.getenv("PGPORT")
+    )
 
 
 
