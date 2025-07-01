@@ -1,3 +1,5 @@
+# import sys
+# sys.path.append("c:/users/ramac/installation-packages")
 from flask import Flask, request, jsonify, render_template
 from transformers import AutoTokenizer
 import sentencepiece as spm
@@ -53,22 +55,13 @@ special_splits = getTokens("filtered_output_file.txt")
 
 # ========== DB CONNECTION ==========
 def get_db_connection():
-    print("🔍 DB ENV VARS:")
-    print("PGDATABASE:", os.getenv("PGDATABASE"))
-    print("PGUSER:", os.getenv("PGUSER"))
-    print("PGPASSWORD:", os.getenv("PGPASSWORD"))
-    print("PGHOST:", os.getenv("PGHOST"))
-    print("PGPORT:", os.getenv("PGPORT"))
-
     return psycopg2.connect(
-        dbname=os.getenv("PGDATABASE"),
-        user=os.getenv("PGUSER"),
-        password=os.getenv("PGPASSWORD"),
-        host=os.getenv("PGHOST"),
-        port=os.getenv("PGPORT")
+        dbname="tokenizer_db",
+        user="postgres",
+        password="praveen2666",
+        host="localhost",
+        port="5432"
     )
-
-
 
 def get_corrected_token(original):
     original = clean_word(original)
@@ -102,18 +95,15 @@ class TamilTokenizer:
                 subwords = corrected
             elif base in self.special_splits:
                 subwords = self.special_splits[base]
+                
             else:
                 # 3️⃣ Else SentencePiece fallback
                 pieces = self.sp.encode_as_pieces(base)
                 subwords = [p for p in pieces if len(p) > 1] or [base]
-
-            # 🔠 Grapheme tokenize subwords
-            word_graphemes = []
-            for sub in subwords:
-                graphemes = grapheme_tokenize(sub)
-                word_graphemes.extend(graphemes)
-
-            segmented_words.append(" ".join(word_graphemes))
+                sub = "".join(subwords)
+                subwords=[sub]
+                
+            segmented_words.extend(subwords)
 
         return segmented_words
 
@@ -190,6 +180,9 @@ def decode_tokens():
     decoded_text = tokenizer.decode(token_ids, skip_special_tokens=True)
     
     return jsonify({"decoded": decoded_text})
+
+
+
 # ========== RUN APP ==========
 if __name__ == "__main__":
     app.run(debug=True)
