@@ -175,7 +175,21 @@ def save_correction_batch():
 
     return jsonify({"message": f"Saved {len(corrections)} corrections successfully!"})
 
+@app.route('/decode_tokens', methods=['POST'])
+def decode_tokens():
+    data = request.get_json()
+    tokens = data.get("tokens", [])
 
+    if not tokens:
+        return jsonify({"decoded": ""})
+
+       # Convert to token IDs first
+    token_ids = tokenizer.convert_tokens_to_ids(tokens)
+
+    # Decode using token IDs
+    decoded_text = tokenizer.decode(token_ids, skip_special_tokens=True)
+    
+    return jsonify({"decoded": decoded_text})
 # ========== RUN APP ==========
 if __name__ == "__main__":
     app.run(debug=True)
