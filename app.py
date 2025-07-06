@@ -65,11 +65,12 @@ def get_corrected_token(original):
     original = clean_word(original)
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT split_tokens FROM corrections WHERE original_word = %s", (original,))
+    cursor.execute("SELECT corrected FROM corrections WHERE original = %s", (original,))
     row = cursor.fetchone()
     conn.close()
     if row:
-        return row[0]  # split_tokens is stored as text[] in DB
+        # Return split tokens as list
+        return row[0].split()
     return None
 
 # ========== MAIN TOKENIZER ==========
@@ -87,19 +88,19 @@ class TamilTokenizer:
         for word in words:
             base = clean_word(word)
 
-            # 1️⃣ DB lookup first
+            # 1️⃣ DB lookup
             corrected = get_corrected_token(base)
 
-            # 2️⃣ Special split file
+            # 2️⃣ Special splits file
             if corrected:
                 subwords = corrected
             elif base in self.special_splits:
                 subwords = self.special_splits[base]
             else:
-                # 3️⃣ Fallback SentencePiece
+                # 3️⃣ SentencePiece fallback
                 pieces = self.sp.encode_as_pieces(base)
                 subwords = [p for p in pieces if len(p) > 1] or [base]
-            
+
             segmented_words.extend(subwords)
 
         return segmented_words
@@ -151,12 +152,13 @@ def save_correction_batch():
         expert = corr.get("expert", "unknown")
 
         if original and corrected_list:
+            corrected_str = " ".join(corrected_list)
             cursor.execute("""
-                INSERT INTO corrections (original_word, split_tokens, expert_name)
+                INSERT INTO corrections (original, corrected, expert_name)
                 VALUES (%s, %s, %s)
-                ON CONFLICT (original_word)
-                DO UPDATE SET split_tokens = EXCLUDED.split_tokens, expert_name = EXCLUDED.expert_name
-            """, (original, corrected_list, expert))
+                ON CONFLICT (original)
+                DO UPDATE SET corrected = EXCLUDED.corrected, expert_name = EXCLUDED.expert_name
+            """, (original, corrected_str, expert))
 
     conn.commit()
     conn.close()
