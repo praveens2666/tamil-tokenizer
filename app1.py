@@ -1,3 +1,5 @@
+# import sys
+# sys.path.append("c:/users/ramac/installation-packages")
 from flask import Flask, request, jsonify, render_template
 from transformers import AutoTokenizer
 import sentencepiece as spm
@@ -53,6 +55,13 @@ special_splits = getTokens("filtered_output_file.txt")
 
 # ========== DB CONNECTION ==========
 def get_db_connection():
+    print("🔍 DB ENV VARS:")
+    print("PGDATABASE:", os.getenv("PGDATABASE"))
+    print("PGUSER:", os.getenv("PGUSER"))
+    print("PGPASSWORD:", os.getenv("PGPASSWORD"))
+    print("PGHOST:", os.getenv("PGHOST"))
+    print("PGPORT:", os.getenv("PGPORT"))
+
     return psycopg2.connect(
         dbname=os.getenv("PGDATABASE"),
         user=os.getenv("PGUSER"),
@@ -68,12 +77,9 @@ def get_corrected_token(original):
     cursor.execute("SELECT corrected FROM corrections WHERE original = %s", (original,))
     row = cursor.fetchone()
     conn.close()
-    if row:
-        # Return split tokens as list
-        return row[0].split()
-    return None
+    return row[0].split() if row else None
 
-# ========== MAIN TOKENIZER ==========
+# ========== MAIN TOKENIZER CLASS ==========
 class TamilTokenizer:
     def __init__(self, sp_model, special_splits):
         self.sp = sp_model
@@ -88,19 +94,22 @@ class TamilTokenizer:
         for word in words:
             base = clean_word(word)
 
-            # 1️⃣ DB lookup
+            # 1️⃣ First check DB
             corrected = get_corrected_token(base)
 
-            # 2️⃣ Special splits file
+            # 2️⃣ Then check special splits
             if corrected:
                 subwords = corrected
             elif base in self.special_splits:
                 subwords = self.special_splits[base]
+                
             else:
-                # 3️⃣ SentencePiece fallback
+                # 3️⃣ Else SentencePiece fallback
                 pieces = self.sp.encode_as_pieces(base)
                 subwords = [p for p in pieces if len(p) > 1] or [base]
-
+                sub = "".join(subwords)
+                subwords=[sub]
+                
             segmented_words.extend(subwords)
 
         return segmented_words
@@ -148,17 +157,15 @@ def save_correction_batch():
 
     for corr in corrections:
         original = clean_word(corr.get("word", ""))
-        corrected_list = corr.get("corrected", [])
+        corrected = " ".join(corr.get("corrected", []))
         expert = corr.get("expert", "unknown")
 
-        if original and corrected_list:
-            corrected_str = " ".join(corrected_list)
-            cursor.execute("""
-                INSERT INTO corrections (original, corrected, expert_name)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (original)
-                DO UPDATE SET corrected = EXCLUDED.corrected, expert_name = EXCLUDED.expert_name
-            """, (original, corrected_str, expert))
+        if original and corrected:
+            cursor.execute("DELETE FROM corrections WHERE original = %s", (original,))
+            cursor.execute(
+                "INSERT INTO corrections (original, corrected, expert_name) VALUES (%s, %s, %s)",
+                (original, corrected, expert)
+            )
 
     conn.commit()
     conn.close()
@@ -173,10 +180,15 @@ def decode_tokens():
     if not tokens:
         return jsonify({"decoded": ""})
 
+       # Convert to token IDs first
     token_ids = tokenizer.convert_tokens_to_ids(tokens)
-    decoded_text = tokenizer.decode(token_ids, skip_special_tokens=True)
 
+    # Decode using token IDs
+    decoded_text = tokenizer.decode(token_ids, skip_special_tokens=True)
+    
     return jsonify({"decoded": decoded_text})
+
+
 
 # ========== RUN APP ==========
 if __name__ == "__main__":
