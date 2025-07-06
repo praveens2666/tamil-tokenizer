@@ -65,7 +65,7 @@ def get_corrected_token(original):
     original = clean_word(original)
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT split_tokens FROM word_splits WHERE original_word = %s", (original,))
+    cursor.execute("SELECT split_tokens FROM corrections WHERE original_word = %s", (original,))
     row = cursor.fetchone()
     conn.close()
     if row:
@@ -152,7 +152,7 @@ def save_correction_batch():
 
         if original and corrected_list:
             cursor.execute("""
-                INSERT INTO word_splits (original_word, split_tokens, expert_name)
+                INSERT INTO corrections (original_word, split_tokens, expert_name)
                 VALUES (%s, %s, %s)
                 ON CONFLICT (original_word)
                 DO UPDATE SET split_tokens = EXCLUDED.split_tokens, expert_name = EXCLUDED.expert_name
